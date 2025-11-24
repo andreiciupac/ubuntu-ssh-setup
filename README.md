@@ -15,6 +15,26 @@
 
 ## Quick Start
 
+### Automated Setup (Recommended)
+
+Download and run the interactive setup script:
+
+```bash
+wget https://raw.githubusercontent.com/andreiciupac/ubuntu-ssh-setup/main/setup-ssh.sh
+chmod +x setup-ssh.sh
+sudo ./setup-ssh.sh
+```
+
+The script will guide you through:
+- ✓ Installing OpenSSH and fail2ban
+- ✓ Selecting network interface
+- ✓ Configuring SSH key authentication
+- ✓ Setting up UFW firewall
+- ✓ Hardening SSH configuration
+- ✓ Enabling brute-force protection
+
+### Manual Setup
+
 ```bash
 sudo apt update && sudo apt install -y openssh-server fail2ban
 sudo systemctl enable --now ssh

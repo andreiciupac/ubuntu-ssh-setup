@@ -20,7 +20,7 @@
 Download and run the interactive setup script:
 
 ```bash
-wget https://raw.githubusercontent.com/andreiciupac/ubuntu-ssh-setup/main/setup-ssh.sh
+wget https://raw.githubusercontent.com/Gaby1337/ubuntu-ssh-setup/main/setup-ssh.sh
 chmod +x setup-ssh.sh
 sudo ./setup-ssh.sh
 ```

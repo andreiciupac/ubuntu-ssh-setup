@@ -321,24 +321,37 @@ configure_firewall() {
     print_step "Configuring firewall rules..."
     
     # Allow SSH before enabling
-    ufw --force allow OpenSSH >/dev/null 2>&1
-    print_success "SSH access allowed"
+    if ufw --force allow OpenSSH >/dev/null 2>&1; then
+        print_success "SSH access allowed through firewall"
+    else
+        print_error "Failed to configure SSH rule"
+        exit 1
+    fi
     
     # Enable UFW
     print_step "Enabling firewall..."
-    echo "y" | ufw enable >/dev/null 2>&1
-    
-    if ufw status | grep -q "Status: active"; then
-        print_success "UFW firewall enabled and configured"
+    if echo "y" | ufw enable >/dev/null 2>&1; then
+        print_success "Firewall enabled"
     else
-        print_error "Failed to enable UFW"
+        print_error "Failed to enable firewall"
+        exit 1
+    fi
+    
+    # Verify status
+    if ufw status | grep -q "Status: active"; then
+        print_success "UFW firewall is active and configured"
+    else
+        print_error "Firewall status verification failed"
         exit 1
     fi
     
     echo ""
     print_info "Current firewall status:"
-    ufw status
+    echo ""
+    ufw status numbered
+    echo ""
     
+    print_success "Firewall configuration complete"
     press_enter
 }
 
@@ -486,30 +499,60 @@ main() {
     
     print_checklist
     
-    echo -e "${GREEN}Your SSH server is now configured and hardened!${NC}\n"
+    echo -e "${GREEN}╔════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${GREEN}║                  CONFIGURATION SUMMARY                         ║${NC}"
+    echo -e "${GREEN}╚════════════════════════════════════════════════════════════════╝${NC}\n"
     
-    echo -e "${CYAN}Connection Information:${NC}"
-    echo -e "  ${ARROW} Local IP:  ${GREEN}$SELECTED_IP${NC}"
-    echo -e "  ${ARROW} Public IP: ${GREEN}${PUBLIC_IP:-Check cloud provider}${NC}"
-    echo -e "  ${ARROW} SSH User:  ${GREEN}$TARGET_USER${NC}"
-    echo -e "  ${ARROW} SSH Port:  ${GREEN}22${NC}"
+    echo -e "${CYAN}📡 Network Configuration:${NC}"
+    echo -e "  ${ARROW} Interface:    ${GREEN}$SELECTED_INTERFACE${NC}"
+    echo -e "  ${ARROW} Local IP:     ${GREEN}$SELECTED_IP${NC}"
+    echo -e "  ${ARROW} Public IP:    ${GREEN}${PUBLIC_IP:-Check cloud provider}${NC}"
     echo ""
     
-    echo -e "${CYAN}Test your connection from your client:${NC}"
+    echo -e "${CYAN}👤 SSH Access:${NC}"
+    echo -e "  ${ARROW} User:         ${GREEN}$TARGET_USER${NC}"
+    echo -e "  ${ARROW} Port:         ${GREEN}22${NC}"
+    echo -e "  ${ARROW} Auth Method:  ${GREEN}Public Key Only${NC}"
+    echo ""
+    
+    echo -e "${CYAN}🔒 Security Settings:${NC}"
+    echo -e "  ${ARROW} Root Login:           ${RED}DISABLED${NC}"
+    echo -e "  ${ARROW} Password Auth:        ${RED}DISABLED${NC}"
+    echo -e "  ${ARROW} Public Key Auth:      ${GREEN}ENABLED${NC}"
+    echo -e "  ${ARROW} UFW Firewall:         ${GREEN}ACTIVE${NC}"
+    echo -e "  ${ARROW} fail2ban Protection:  ${GREEN}ACTIVE${NC}"
+    echo ""
+    
+    echo -e "${CYAN}🔧 Configuration Files:${NC}"
+    echo -e "  ${ARROW} SSH Config:       ${CYAN}/etc/ssh/sshd_config${NC}"
+    echo -e "  ${ARROW} Backup:           ${CYAN}$BACKUP_CONFIG${NC}"
+    echo -e "  ${ARROW} Authorized Keys:  ${CYAN}$AUTHORIZED_KEYS${NC}"
+    echo ""
+    
+    echo -e "${CYAN}🚀 Connect from your client:${NC}"
     echo -e "  ${GREEN}ssh $TARGET_USER@$SELECTED_IP${NC}"
     if [[ -n "$PUBLIC_IP" && "$PUBLIC_IP" != "Unable to detect" ]]; then
         echo -e "  ${GREEN}ssh $TARGET_USER@$PUBLIC_IP${NC}"
     fi
     echo ""
     
-    echo -e "${YELLOW}⚠ IMPORTANT REMINDERS:${NC}"
-    echo -e "  ${ARROW} Test SSH key login before closing this session"
-    echo -e "  ${ARROW} Password authentication is now DISABLED"
-    echo -e "  ${ARROW} Root login via SSH is DISABLED"
-    echo -e "  ${ARROW} Backup saved: ${CYAN}$BACKUP_CONFIG${NC}"
+    echo -e "${CYAN}📋 Useful Commands:${NC}"
+    echo -e "  ${ARROW} Check SSH status:     ${CYAN}sudo systemctl status ssh${NC}"
+    echo -e "  ${ARROW} View SSH logs:        ${CYAN}sudo journalctl -u ssh -f${NC}"
+    echo -e "  ${ARROW} Check firewall:       ${CYAN}sudo ufw status${NC}"
+    echo -e "  ${ARROW} Check fail2ban:       ${CYAN}sudo fail2ban-client status sshd${NC}"
     echo ""
     
+    echo -e "${YELLOW}⚠  IMPORTANT REMINDERS:${NC}"
+    echo -e "  ${ARROW} Test SSH key login NOW before closing this session"
+    echo -e "  ${ARROW} Keep this terminal open until you verify access works"
+    echo -e "  ${ARROW} Password authentication is permanently disabled"
+    echo -e "  ${ARROW} Only the configured SSH key can access $TARGET_USER account"
+    echo ""
+    
+    echo -e "${GREEN}═══════════════════════════════════════════════════════════════${NC}"
     print_success "Setup completed successfully!"
+    echo -e "${GREEN}═══════════════════════════════════════════════════════════════${NC}\n"
 }
 
 # Run the main function
